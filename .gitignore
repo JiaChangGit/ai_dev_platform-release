@@ -1,0 +1,18 @@
+# 發行儲存庫不得保存產品原始碼、skill 或建置成品。
+external/
+src/
+app/
+build/
+dist/
+artifacts/
+*.apk
+*.aab
+*.bin
+*.elf
+*.hex
+*.img
+*.iso
+*.zip
+*.tar
+*.tgz
+*.gz
