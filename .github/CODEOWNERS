@@ -1,0 +1,8 @@
+# GitHub／GitLab 共用 CODEOWNERS；由 scripts/manage_collaborators.py 維護。
+* @JiaChangGit @louisxchangtw
+
+/release-evidence/ @JiaChangGit @louisxchangtw
+/release-notes/ @JiaChangGit @louisxchangtw
+/scripts/ @JiaChangGit @louisxchangtw
+/.github/ @JiaChangGit @louisxchangtw
+/.gitlab/ @JiaChangGit @louisxchangtw

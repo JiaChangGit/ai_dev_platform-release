@@ -1,0 +1,25 @@
+name: repository-policy
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  repository-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.x"
+
+      - name: Validate repository policy
+        run: |
+          python3 -B -c 'compile(open("scripts/manage_collaborators.py", encoding="utf-8").read(), "scripts/manage_collaborators.py", "exec")'
+          python3 -B scripts/manage_collaborators.py check
