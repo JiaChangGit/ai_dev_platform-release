@@ -1,4 +1,17 @@
-# 發行儲存庫不得保存產品原始碼、skill 或建置成品。
+# 發行儲存庫不得保存敏感資料、產品原始碼、skill 或建置成品。
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+secrets/
+credentials/
+/.ai/handoffs/
+*.log
+__pycache__/
 external/
 src/
 app/
