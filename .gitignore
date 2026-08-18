@@ -12,6 +12,11 @@ credentials/
 /.ai/handoffs/
 *.log
 __pycache__/
+*.py[cod]
+.idea/
+.vscode/
+.gradle/
+local.properties
 external/
 src/
 app/

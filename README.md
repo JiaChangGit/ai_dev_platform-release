@@ -16,6 +16,32 @@ flowchart LR
 | Release Note | `release-notes/<version>.md` |
 | 發行標記 | Git tag `v<MAJOR>.<MINOR>.<PATCH>` |
 | 成品位置與摘要 | 發行證據內的 `artifact.uri`、`artifact.sha256` |
+| Repository 管理檔 | `.github/`、`.gitlab/`、`.gitlab-ci.yml`、`scripts/manage_collaborators.py` |
+
+## Collaborator 與審查政策
+
+本 repository 內的腳本可獨立同步 GitHub／GitLab CODEOWNERS，並設定 collaborator／member、reviewer、必要 CI 與預設分支保護。預設只顯示計畫；`--apply` 才會修改檔案或呼叫 API。
+
+```bash
+python3 -B scripts/manage_collaborators.py add <username>
+python3 -B scripts/manage_collaborators.py add <username> --apply
+python3 -B scripts/manage_collaborators.py check
+```
+
+GitHub 使用本機 `gh auth login` 的認證。GitLab Token 只從 `GITLAB_TOKEN` 環境變數讀取，不得寫入 repository 或 CI 設定。新 GitHub 邀請尚未接受時，腳本不會先啟用 branch protection；對方接受後，以相同命令重跑。
+
+GitLab project 需明確指定：
+
+```bash
+read -rsp "GitLab Token: " GITLAB_TOKEN
+printf '\n'
+export GITLAB_TOKEN
+python3 -B scripts/manage_collaborators.py add <username> \
+  --apply --skip-github --gitlab-project <group/release-project>
+unset GITLAB_TOKEN
+```
+
+GitLab 強制 Code Owner 核准與 project approval rule 需要 Premium 或 Ultimate；不支援時腳本會失敗，不會降低審查要求。
 
 ## 第一次連接遠端
 
