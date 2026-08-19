@@ -24,11 +24,18 @@ flowchart LR
 
 ```bash
 python3 -B scripts/manage_collaborators.py add <username>
+python3 -B scripts/manage_collaborators.py add <username> --preflight-only
 python3 -B scripts/manage_collaborators.py add <username> --apply
 python3 -B scripts/manage_collaborators.py check
 ```
 
-GitHub 使用本機 `gh auth login` 的認證。GitLab Token 只從 `GITLAB_TOKEN` 環境變數讀取，不得寫入 repository 或 CI 設定。新 GitHub 邀請尚未接受時，腳本不會先啟用 branch protection；對方接受後，以相同命令重跑。
+GitHub 使用本機 `gh auth login` 的認證。GitLab Token 只從 `GITLAB_TOKEN` 環境變數讀取，不得寫入 repository 或 CI 設定。遠端操作會先設定保護政策，再授予成員權限。新 GitHub 帳號只先收到 `pull` 唯讀邀請；對方接受後，以相同命令重跑，才會升為指定的 write 權限並同步 CODEOWNERS。
+
+GitHub Free 的私人 repository 無法使用 branch protection。腳本會在修改本機與遠端設定前先檢查這項能力；若 GitHub 回覆需升級方案，操作會停止，不會自動把 repository 改成公開，也不會略過既定阻擋條件。
+
+GitLab 也會在任何寫入前，以唯讀 API 確認 Token 有效且包含 `api` scope、身分具有 Maintainer／Owner 權限、目標 username 是 active、direct membership 與 group membership lock 允許新增、分支與指定的 Merge Request 存在、protected branch 回應完整，且 Premium／Ultimate 的 Code Owner 與 required approval rule 可用。任一條件不成立時會停止，不會先加入 member 或修改部分 project policy。
+
+GitHub 與 GitLab API 不提供跨服務交易（transaction）。預檢通過後，遠端狀態仍可能在寫入前改變；執行中斷時，依畫面中的 `[OK]`／`[FAIL]` 修正問題，再用相同參數重跑。
 
 GitLab project 需明確指定：
 
@@ -36,6 +43,8 @@ GitLab project 需明確指定：
 read -rsp "GitLab Token: " GITLAB_TOKEN
 printf '\n'
 export GITLAB_TOKEN
+python3 -B scripts/manage_collaborators.py add <username> \
+  --preflight-only --skip-github --gitlab-project <group/release-project>
 python3 -B scripts/manage_collaborators.py add <username> \
   --apply --skip-github --gitlab-project <group/release-project>
 unset GITLAB_TOKEN
