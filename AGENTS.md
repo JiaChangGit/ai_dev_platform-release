@@ -4,14 +4,14 @@
 
 1. `../ai-dev-platform/AGENTS.md`
 2. `../ai-dev-platform/workflow/release.md`
-3. `../ai-dev-platform/docs/release-evidence.md`
+3. `../ai-dev-platform/docs/ci-cd-release.md`
 4. 本儲存庫 `README.md`
 
 ## 儲存庫邊界
 
 - 只保存 `release-evidence/*.json`、`release-notes/*.md`、Git tag 與必要的儲存庫管理檔。
 - 建置成品保存在 CI／成品平台；本儲存庫只記錄不可變 URI 與 SHA-256。
-- 不得加入平台原始碼、`external/`、第三方 skill、ZIP、APK、AAB、韌體映像檔、ELF、簽章、SBOM、SLSA 實體檔或私鑰。
+- 不得加入平台原始碼、ZIP、APK、AAB、韌體映像檔、ELF、簽章、SBOM、SLSA 實體檔或私鑰。
 - 本儲存庫使用獨立 `.git`，remote 必須是 `JiaChangGit/ai_dev_platform-release`，不得指向平台維護儲存庫。
 - 若本機 `.git` 已移除，只能連接同名的空白遠端重新初始化；遠端已有歷史時必須重新 clone，不得 force push。
 
