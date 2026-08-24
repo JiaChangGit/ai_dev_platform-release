@@ -1,6 +1,6 @@
 # AI Dev Platform Release
 
-本儲存庫保存 AI Dev Platform 的發行中繼資料，不保存平台原始碼或建置成品。平台來源位於平行目錄 `ai_dev_platform-cicd-platform/`；ZIP、簽章、軟體物料清單（Software Bill of Materials, SBOM）與 SLSA 來源證明保存在 CI／成品平台。
+本儲存庫保存 AI Dev Platform 的發行中繼資料，不保存平台原始碼或建置成品。平台來源位於平行目錄 `ai_dev_platform-cicd-platform/`；ZIP、checksum、軟體物料清單（Software Bill of Materials, SBOM）與 GitHub/Sigstore SLSA attestation bundle 保存在來源 repository 的 GitHub Releases。
 
 ## 目錄與資料流
 
@@ -14,7 +14,7 @@ Work/
 ```mermaid
 flowchart LR
     S["ai_dev_platform-cicd-platform<br/>原始碼、測試、Git 歷史"] -->|"build、test、lint、security、package"| C["CI／成品平台"]
-    C -->|"ZIP、signature、SBOM、SLSA"| A["不可變成品位置"]
+    C -->|"ZIP、checksum、SBOM、attestation"| A["來源 repository<br/>GitHub Releases"]
     C -->|"release evidence<br/>URI／SHA-256"| R["ai_dev_platform-release<br/>Note、evidence、tag"]
     A -->|"驗證通過後安裝"| P["ai-dev-platform<br/>唯讀、無 .git"]
 ```
@@ -58,14 +58,14 @@ sequenceDiagram
     participant R as 發行儲存庫
     S->>C: 已合併來源 commit
     C->>C: 五項必要檢查與封裝
-    C->>C: ZIP、signature、SBOM、SLSA
+    C->>C: prerelease ZIP、SBOM、SLSA attestation
     C->>R: evidence + Release Note
     R->>R: layout／evidence 驗證
     R->>R: 功能分支 commit + PR 合併
-    R->>R: 在 main 建立本機 v<version> tag
+    R->>R: 在 main 建立並推送 v<version> tag
     R->>C: 下載不可變驗證材料
     R->>R: readiness 完整驗證
-    R-->>C: 全部通過後發布
+    R-->>C: 全部通過後 promotion 為正式 Release
 ```
 
 ### 1. 確認來源與 CI
@@ -88,15 +88,15 @@ python3 -B -m unittest discover -s tests -v
 - `security`
 - `package`
 
-目前維護儲存庫的 `.github/workflows/check.yml` 會驗證平台來源、單元測試、封裝計畫與 Android 範例，但不會產生正式簽章、SBOM、SLSA 或發布不可變 ZIP。正式發行前，CI／成品平台必須另行提供上述五項契約證據與供應鏈材料；不得把本機 dry-run 當成正式發行證據。
+維護儲存庫的 `.github/workflows/check.yml` 會驗證平台來源、單元測試、封裝計畫與 Android 範例。來源 PR 合併後，擁有者在最新 `main` 建立 annotated `v<version>` tag；`.github/workflows/release.yml` 經 `release-build` environment 的獨立 reviewer 核准後，產生 ZIP、checksum、SPDX SBOM 與 keyless GitHub/Sigstore SLSA bundle，並建立 prerelease build candidate。不得把本機 dry-run 當成正式發行證據。
 
 ### 2. 設定版本並建立功能分支
 
-以下以 `1.3.0` 示範。版本不同時只修改 `RELEASE_VERSION`。先回到本儲存庫，從遠端最新 `main` 建立功能分支：
+以下以 `1.4.0` 示範。版本不同時只修改 `RELEASE_VERSION`。先回到本儲存庫，從遠端最新 `main` 建立功能分支：
 
 ```bash
 cd ../ai_dev_platform-release
-RELEASE_VERSION=1.3.0
+RELEASE_VERSION=1.4.0
 RELEASE_BRANCH="agent/release-v${RELEASE_VERSION}"
 EVIDENCE_FILE="release-evidence/${RELEASE_VERSION}.json"
 NOTE_FILE="release-notes/${RELEASE_VERSION}.md"
@@ -113,11 +113,11 @@ git switch -c "$RELEASE_BRANCH"
 依共用平台範本建立：
 
 ```text
-release-evidence/1.3.0.json
-release-notes/1.3.0.md
+release-evidence/1.4.0.json
+release-notes/1.4.0.md
 ```
 
-Evidence 需記錄不可變來源 commit／ref、ZIP URI／SHA-256、簽章 URI／SHA-256、CI run、SBOM、SLSA、獨立核准者與發布者。Release Note 的第一行必須是包含相同 `v1.3.0` 的一級標題。
+Evidence 需記錄不可變來源 commit／tag、ZIP URI／SHA-256、Sigstore bundle URI／SHA-256、GitHub attestation repository／workflow／source ref、CI run、SBOM、SLSA、獨立核准者與發布者。`artifact.signatureAlgorithm` 使用 `github-attestation`，signature 與 provenance 指向同一份 bundle。Release Note 的第一行必須是包含相同 `v1.4.0` 的一級標題。
 
 ### 4. 驗證中繼資料並建立 PR
 
@@ -164,20 +164,29 @@ git tag -a "v${RELEASE_VERSION}" -m "v${RELEASE_VERSION}"
 ```bash
 RELEASE_MATERIALS_DIR="$(mktemp -d)"
 ARTIFACT_FILE="$RELEASE_MATERIALS_DIR/ai-dev-platform-${RELEASE_VERSION}.zip"
-SIGNATURE_FILE="${ARTIFACT_FILE}.sig"
+SIGNATURE_FILE="$RELEASE_MATERIALS_DIR/ai-dev-platform-${RELEASE_VERSION}.provenance.sigstore.json"
 SBOM_FILE="$RELEASE_MATERIALS_DIR/ai-dev-platform-${RELEASE_VERSION}.spdx.json"
-PROVENANCE_FILE="$RELEASE_MATERIALS_DIR/ai-dev-platform-${RELEASE_VERSION}.provenance.json"
-TRUSTED_PUBLIC_KEY=/path/to/trusted-release-public-key.pem
+PROVENANCE_FILE="$SIGNATURE_FILE"
 ```
 
-從 evidence 指向的受信任不可變位置，將 ZIP、簽章、SBOM 與 SLSA 下載到上述四個路徑。`TRUSTED_PUBLIC_KEY` 必須指向經核准管道取得的公開金鑰。不要把這些檔案複製進本儲存庫。下載後先確認路徑：
+從 evidence 指向的來源 repository GitHub Release，將 ZIP、SBOM 與 attestation bundle 下載到上述路徑。不要把這些檔案複製進本儲存庫：
+
+```bash
+gh release download "v${RELEASE_VERSION}" \
+  --repo JiaChangGit/ai_dev_platform-cicd-platform \
+  --dir "$RELEASE_MATERIALS_DIR" \
+  --pattern "ai-dev-platform-${RELEASE_VERSION}.zip" \
+  --pattern "ai-dev-platform-${RELEASE_VERSION}.spdx.json" \
+  --pattern "ai-dev-platform-${RELEASE_VERSION}.provenance.sigstore.json"
+```
+
+下載後先確認路徑：
 
 ```bash
 test -f "$ARTIFACT_FILE"
 test -f "$SIGNATURE_FILE"
 test -f "$SBOM_FILE"
 test -f "$PROVENANCE_FILE"
-test -f "$TRUSTED_PUBLIC_KEY"
 ```
 
 ### 7. 執行完整 readiness 關卡
@@ -188,7 +197,6 @@ python3 -B ../ai-dev-platform/scripts/verify_release_readiness.py . \
   --source-repo "$SOURCE_REPO" \
   --artifact-file "$ARTIFACT_FILE" \
   --signature-file "$SIGNATURE_FILE" \
-  --public-key "$TRUSTED_PUBLIC_KEY" \
   --sbom-file "$SBOM_FILE" \
   --provenance-file "$PROVENANCE_FILE"
 ```
@@ -199,11 +207,11 @@ python3 -B ../ai-dev-platform/scripts/verify_release_readiness.py . \
 2. 本儲存庫工作樹乾淨，tag 指向 HEAD，目錄符合允許清單。
 3. source commit 屬於 evidence 指定的 ref。
 4. ZIP、簽章、SBOM、SLSA 的 SHA-256 與 evidence 一致。
-5. OpenSSL SHA-256 分離式簽章有效。
-6. SBOM 是 SPDX 2.x 或 CycloneDX JSON，SLSA predicate type 正確。
+5. `gh attestation verify` 固定 GitHub repository、workflow、來源 commit／ref 與 SLSA predicate，且拒絕 self-hosted runner 簽署身分。
+6. SBOM 是 SPDX 2.x 或 CycloneDX JSON，GitHub attestation bundle hash 與 SLSA predicate type 正確。
 7. Evidence 宣告的五項必要 CI check 都存在，核准者與發布者字串不同。
 
-Readiness 不會連線到 CI、成品 URI 或身分系統。發布者仍須在 GitHub、GitLab、Jenkins 或內部平台確認 evidence 的 run 確實成功、下載來源可信任，且核准者是有效的獨立人員；驗證器只核對本機 Git 狀態、evidence 契約與下載檔案。
+Readiness 會透過 GitHub CLI 驗證 attestation，但不會自行判定 evidence 中的核准者是否為有效的獨立人員。發布者仍須在 GitHub 確認來源 run 成功、environment 與 PR 核准紀錄有效。
 
 ### 8. 推送 tag 並發布
 
@@ -211,17 +219,26 @@ Readiness 不會連線到 CI、成品 URI 或身分系統。發布者仍須在 G
 git push origin "v${RELEASE_VERSION}"
 ```
 
-只有第 7 步 readiness 通過後才能推送 tag 與發布 ZIP。Evidence／Note 已經由 PR 合併到 `main`，不需要再直接推送 `main`。
+只有第 7 步 readiness 通過後才能推送 release metadata tag。Evidence／Note 已經由 PR 合併到 `main`，不需要再直接推送 `main`。接著從同一來源 tag 啟動受保護的 promotion workflow：
 
-## 1.3.0 範例
+```bash
+gh workflow run promote-release.yml \
+  --repo JiaChangGit/ai_dev_platform-cicd-platform \
+  --ref "v${RELEASE_VERSION}" \
+  -f "version=${RELEASE_VERSION}"
+```
+
+`release-promotion` environment 經獨立 reviewer 核准後，workflow 會重新下載材料與 release tag、再跑一次 readiness；全數通過才把 prerelease candidate 改為正式 Latest Release。
+
+## 1.4.0 範例
 
 以下只示範檔名與路徑，不包含真實 URI、hash、run ID 或核准者：
 
 ```text
-release-evidence/1.3.0.json
-release-notes/1.3.0.md
-Git tag: v1.3.0
-Artifact: ai-dev-platform-1.3.0.zip
+release-evidence/1.4.0.json
+release-notes/1.4.0.md
+Git tag: v1.4.0
+Artifact: ai-dev-platform-1.4.0.zip
 ```
 
 實際 SHA-256 必須由 CI／成品平台提供並由 readiness 重新計算，不能沿用文件範例。
@@ -262,11 +279,11 @@ python3 -B scripts/manage_collaborators.py add "$COLLABORATOR_USERNAME" \
 unset GITLAB_TOKEN
 ```
 
-GitHub 私人儲存庫的 branch protection 需要適用方案。GitLab 強制 Code Owner 與 approval rule 需要 Premium 或 Ultimate。不支援時腳本會停止，不會自動降低規則。
+GitHub Public repository 在 GitHub Free 可使用 branch protection、必要 status checks 與 reviewer；本 repository 已採此模式。GitLab Free 可保護 branch，但 Code Owner approval／required approval 只能是非阻擋性提示，強制 approval rule 需要 Premium 或 Ultimate。因此 GitHub 是正式 gate，GitLab 只做單向次要 remote；不支援時腳本會停止，不會自動降低 GitHub 規則。
 
 ## 第一次連接遠端
 
-目前儲存庫已連接 `JiaChangGit/ai_dev_platform-release`，不要重跑本節。只有本機 `.git` 不存在、且遠端是同名空白私人儲存庫時，才能執行：
+目前儲存庫已連接 Public `JiaChangGit/ai_dev_platform-release`，不要重跑本節。只有本機 `.git` 不存在、且遠端是同名空白 repository 時，才能執行：
 
 ```bash
 git init -b main
@@ -292,7 +309,7 @@ git push -u origin main
 | 找不到 tag | `v<version>` 尚未建立或不指向 HEAD | 在正確 commit 建立 tag；已發布 tag 不得移動 |
 | Squash merge 後 tag 指向舊 commit | 在 PR 分支建立了正式 tag | 刪除尚未推送的本機 tag；切到最新 `main` 重新建立，再執行 readiness |
 | Artifact URI 被判定可變 | URI 含 `latest`、`current`、`snapshot` 或 `nightly` | 改用包含版本或 SHA-256 前 12 碼的不可變 URI |
-| GitHub 設定保護規則回傳方案限制 | 私人儲存庫方案不支援必要功能 | 升級方案；不得改公開或移除阻擋條件 |
+| GitHub 設定保護規則回傳方案限制 | repository 被改為不支援規則的可見性／方案 | 保持 Public／Free 或升級方案；不得移除阻擋條件 |
 | GitLab Token scope 不足 | Token 只有 `read_api` 或 repository scope | 使用經核准且包含標準 `api` scope 的 Token，執行後立即清除環境變數 |
 
 ## 每次變更後的只讀檢查

@@ -25,7 +25,7 @@ python3 -B scripts/manage_collaborators.py check
 git diff --check
 ```
 
-`verify_release_evidence.py` 只驗證 JSON 契約。正式發布前，必須依 README 執行 `verify_release_readiness.py`，並檢查實體成品 SHA-256、OpenSSL 簽章、SBOM、SLSA、來源 commit、乾淨工作樹與 tag。驗證程式不會查詢遠端 CI 或身分系統；發布者還要在實際平台確認 CI run 與獨立核准紀錄。
+`verify_release_evidence.py` 只驗證 JSON 契約。正式發布前，必須依 README 執行 `verify_release_readiness.py`，並檢查實體成品 SHA-256、GitHub attestation（或相容 OpenSSL 簽章）、SBOM、SLSA、來源 commit、乾淨工作樹與 tag。驗證程式不會自行判定 reviewer 是否獨立；發布者還要在 GitHub 確認 CI run 與獨立核准紀錄。
 
 ## 禁止事項
 
