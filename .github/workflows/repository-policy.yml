@@ -23,7 +23,7 @@ jobs:
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: JiaChangGit/ai_dev_platform-cicd-platform
-          ref: b493c13f92c57e21b4a7f651aa6fc0aa59938b2d
+          ref: 0ffe388a15f769fd407446e569c5c322408eb373
           sparse-checkout: |
             distribution
             scripts

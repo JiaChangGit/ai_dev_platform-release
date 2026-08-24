@@ -8,7 +8,7 @@
 
 - [ ] `release-evidence/<version>.json`
 - [ ] `release-notes/<version>.md`
-- [ ] 沒有加入原始碼、skill 或建置成品
+- [ ] 沒有加入原始碼或建置成品
 
 ## 驗證
 
