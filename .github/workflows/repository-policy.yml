@@ -13,13 +13,33 @@ jobs:
   repository-policy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v7
+      - name: Checkout release metadata
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          python-version: "3.x"
+          path: release
+          persist-credentials: false
+
+      - name: Checkout immutable platform verifier
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: JiaChangGit/ai_dev_platform-cicd-platform
+          ref: b493c13f92c57e21b4a7f651aa6fc0aa59938b2d
+          sparse-checkout: |
+            distribution
+            scripts
+          path: platform-verifier
+          persist-credentials: false
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
 
       - name: Validate repository policy
         run: |
-          python3 -B -c 'compile(open("scripts/manage_collaborators.py", encoding="utf-8").read(), "scripts/manage_collaborators.py", "exec")'
-          python3 -B scripts/manage_collaborators.py check
+          python3 -B -c 'compile(open("release/scripts/manage_collaborators.py", encoding="utf-8").read(), "release/scripts/manage_collaborators.py", "exec")'
+          python3 -B release/scripts/manage_collaborators.py check
+          python3 -B platform-verifier/scripts/verify_release_layout.py release
+          for evidence in release/release-evidence/*.json; do
+            test -e "${evidence}" || continue
+            python3 -B platform-verifier/scripts/verify_release_evidence.py "${evidence}"
+          done

@@ -206,7 +206,9 @@ def check_local_policy() -> list[str]:
         ".gitlab-ci.yml",
         "AGENTS.md",
         "CLAUDE.md",
+        "LICENSE",
         "README.md",
+        "SECURITY.md",
         "opencode.json",
     }
     for path in ROOT.rglob("*"):
@@ -222,7 +224,9 @@ def check_local_policy() -> list[str]:
                 and relative.suffix == ".md")
             or posix in {
                 ".github/CODEOWNERS",
+                ".github/dependabot.yml",
                 ".github/pull_request_template.md",
+                ".github/workflows/codeql.yml",
                 ".github/workflows/repository-policy.yml",
                 ".gitlab/CODEOWNERS",
                 ".gitlab/merge_request_templates/default.md",
@@ -388,7 +392,10 @@ def configure_github_policy(
         {
             "required_status_checks": {
                 "strict": True,
-                "checks": [{"context": "repository-policy"}],
+                "checks": [
+                    {"context": "repository-policy"},
+                    {"context": "analyze-python"},
+                ],
             },
             "enforce_admins": True,
             "required_pull_request_reviews": {
