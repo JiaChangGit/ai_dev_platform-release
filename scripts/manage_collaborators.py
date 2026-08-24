@@ -392,7 +392,10 @@ def configure_github_policy(
         {
             "required_status_checks": {
                 "strict": True,
-                "checks": [{"context": "repository-policy"}],
+                "checks": [
+                    {"context": "repository-policy"},
+                    {"context": "analyze-python"},
+                ],
             },
             "enforce_admins": True,
             "required_pull_request_reviews": {
