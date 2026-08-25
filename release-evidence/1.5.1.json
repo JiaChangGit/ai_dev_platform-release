@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 2,
+  "product": "ai-dev-platform",
+  "version": "1.5.1",
+  "source": {
+    "repository": "https://github.com/JiaChangGit/ai_dev_platform-cicd-platform",
+    "commit": "a756faad1bb418b8fcd741333b64f7ffa3b3fa1c",
+    "ref": "refs/tags/v1.5.1"
+  },
+  "artifact": {
+    "uri": "https://github.com/JiaChangGit/ai_dev_platform-cicd-platform/releases/download/v1.5.1/ai-dev-platform-1.5.1.zip",
+    "sha256": "dac60daa4efb1a9138ca77dd256bb8efca20db0cd7ccd16d49f760de3a8161c6",
+    "immutable": true,
+    "signatureUri": "https://github.com/JiaChangGit/ai_dev_platform-cicd-platform/releases/download/v1.5.1/ai-dev-platform-1.5.1.provenance.sigstore.json",
+    "signatureSha256": "f9beb01f88a7e41d9fe3abc77ac427ddb3424b70c9333f599fc900f4bbac8f6b",
+    "signatureAlgorithm": "github-attestation",
+    "signatureIdentity": {
+      "repository": "JiaChangGit/ai_dev_platform-cicd-platform",
+      "workflow": "JiaChangGit/ai_dev_platform-cicd-platform/.github/workflows/release.yml",
+      "sourceRef": "refs/tags/v1.5.1"
+    }
+  },
+  "verification": {
+    "ciSystem": "github-actions",
+    "runId": "https://github.com/JiaChangGit/ai_dev_platform-cicd-platform/actions/runs/32867684238",
+    "checks": [
+      "build",
+      "test",
+      "lint",
+      "security",
+      "package"
+    ]
+  },
+  "sbom": {
+    "uri": "https://github.com/JiaChangGit/ai_dev_platform-cicd-platform/releases/download/v1.5.1/ai-dev-platform-1.5.1.spdx.json",
+    "sha256": "2494bb623a2a59c93716b3c33082da01153979edfd78ba49ca421c901794f217",
+    "format": "spdx-json"
+  },
+  "provenance": {
+    "uri": "https://github.com/JiaChangGit/ai_dev_platform-cicd-platform/releases/download/v1.5.1/ai-dev-platform-1.5.1.provenance.sigstore.json",
+    "sha256": "f9beb01f88a7e41d9fe3abc77ac427ddb3424b70c9333f599fc900f4bbac8f6b",
+    "predicateType": "https://slsa.dev/provenance/v1"
+  },
+  "approval": {
+    "status": "approved",
+    "approvedBy": "louisxchangtw"
+  },
+  "release": {
+    "publisher": "JiaChangGit"
+  }
+}
