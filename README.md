@@ -29,25 +29,26 @@ flowchart LR
 - 實體簽章、attestation、SBOM、provenance 或金鑰；
 - `.env`、Token、CI 工作目錄、`build/`、`dist/`、`artifacts/`。
 
-## v1.5.0 第一次正式發布
+## 後續正式發布
 
-目前尚無正式 GitHub Release。下列內容要等 source 1.5.0 PR 合併且所有 required checks 通過後執行。
+`v1.5.0` 已完成第一份正式 GitHub Release。下列流程適用於後續版本；先把 `X.Y.Z` 換成 source `distribution/manifest.json` 的版本，而且必須等 source PR 合併與所有 required checks 通過後才執行。
 
 ### 1. 在 source 建 candidate
 
 ```bash
 cd ../ai_dev_platform-cicd-platform
+RELEASE_VERSION=X.Y.Z
 git switch main
 git pull --ff-only origin main
 test -z "$(git status --porcelain)"
-git tag -a v1.5.0 -m "release: v1.5.0"
-git push origin v1.5.0
+git tag -a "v${RELEASE_VERSION}" -m "release: v${RELEASE_VERSION}"
+git push origin "v${RELEASE_VERSION}"
 ```
 
 `release-build` environment 由來源作者以外的人核准。完成後下載並驗證：
 
 ```bash
-RELEASE_VERSION=1.5.0
+RELEASE_VERSION=X.Y.Z
 RELEASE_MATERIALS_DIR="$(mktemp -d)"
 gh release download "v${RELEASE_VERSION}" \
   --repo JiaChangGit/ai_dev_platform-cicd-platform \
@@ -68,8 +69,8 @@ gh release download "v${RELEASE_VERSION}" \
 
 ```bash
 cd ../ai_dev_platform-release
-RELEASE_VERSION=1.5.0
-RELEASE_BRANCH="agent/release-v${RELEASE_VERSION}"
+RELEASE_VERSION=X.Y.Z
+RELEASE_BRANCH="release/${RELEASE_VERSION}"
 EVIDENCE_FILE="release-evidence/${RELEASE_VERSION}.json"
 NOTE_FILE="release-notes/${RELEASE_VERSION}.md"
 SOURCE_REPO=../ai_dev_platform-cicd-platform
@@ -93,7 +94,7 @@ gh pr create --base main --head "$RELEASE_BRANCH" \
   --title "chore(release): prepare v${RELEASE_VERSION}" --fill
 ```
 
-等待 `repository-policy`、`analyze-python` 與獨立核准通過後合併。PR 分支不得建立正式 tag。
+等待 `repository-policy`、`analyze-python` 與獨立核准通過後，以 rebase merge 保留發行分支的原子 commits。PR 分支不得建立正式 tag；核准後若又 push，必須重新取得 last-push approval。
 
 ### 3. 在 release main 建本機 tag 並跑 readiness
 
